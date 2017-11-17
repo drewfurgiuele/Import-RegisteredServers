@@ -14,4 +14,4 @@ This is rough and needs some more work, but it works for me. It won't copy any c
 
 1. This requires the SQL Server PowerShell Module. Get it here: https://www.powershellgallery.com/packages/SqlServer/
 2. This will modify and then overwrite your settings. It makes a backup. But you should know it does this.
-3. Run SQL Operations Studio once to generate a settings file before you start.
+3. Run SQL Operations Studio once to generate a settings file before you start. Add a connection to get a root document level in your settings. I am working to make it check for that, but for now just add one (and then delete it later)
