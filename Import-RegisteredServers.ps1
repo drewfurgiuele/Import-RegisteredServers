@@ -71,5 +71,3 @@ end {
         $UserSettings | ConvertTo-Json -Depth 99 | Out-File -FilePath $SaveTo -Encoding "UTF8"
     }
 }
-
-#
