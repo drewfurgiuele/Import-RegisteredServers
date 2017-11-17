@@ -1,3 +1,12 @@
+<#
+    There should be a longer help file here. It's coming. But for now, here's all you really need to know:
+
+    1. This requires the SQL Server PowerShell Module. Get it here: https://www.powershellgallery.com/packages/SqlServer/
+    2. This will modify and then overwrite your settings. It makes a backup. But you should know it does this.
+    3. Run SQL Operations Studio once to generate a settings file before you start.
+
+#>
+
 [cmdletbinding()]
 param(
     [Parameter(Mandatory=$false)] [string] $PathToSettingsFile = $null,
