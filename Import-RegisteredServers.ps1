@@ -1,10 +1,5 @@
 <#
-    There should be a longer help file here. It's coming. But for now, here's all you really need to know:
-
-    1. This requires the SQL Server PowerShell Module. Get it here: https://www.powershellgallery.com/packages/SqlServer/
-    2. This will modify and then overwrite your settings. It makes a backup. But you should know it does this.
-    3. Run SQL Operations Studio once to generate a settings file before you start.
-
+    There should be a longer help file here.
 #>
 
 [cmdletbinding()]
@@ -14,67 +9,103 @@ param(
 )
 
 begin {
-    if ($PathToSettingsFile -eq $null) {
+    if (!$PathToSettingsFile) {
         Write-Verbose "No path specified, defaulting to current APPDATA environment variable..."
         $PathToSettingsFile = ($env:APPDATA + "\sqlops\user\settings.json") 
         Write-Verbose "Backing up existing settings file..."
         Copy-Item -Path $PathToSettingsFile -Destination ($PathToSettingsFile + ".old")
+        Write-Verbose "Path to settings = $PathToSettingsFile"
     }
+
+    Write-Verbose "Reading current settings file..."
+    $UserSettings = (get-content -Path $PathToSettingsFile -Raw | ConvertFrom-Json)
 }
 
 process {
-    Write-Verbose "Reading current settings file..."
-    $UserSettings = get-content -Path $PathToSettingsFile -Raw | ConvertFrom-Json
-
-
     $RegisteredServers = Get-ChildItem SQLSERVER:\SQLRegistration -Recurse | Where-Object {$_.ServerType -eq "DatabaseEngine"}
     $RegisteredServers.Refresh()
     $ServerGroups = $RegisteredServers | Where-Object {$_.ServerName -eq $null}
     $Servers = $RegisteredServers | Where-Object {$_.ServerName -ne $null}
-    
     $RootConnectionGroup = $UserSettings."datasource.connectionGroups" | Where-Object {$_.Name -eq "ROOT"}
 
     Write-Verbose "Getting server groups..."
+    if (($UserSettings."datasource.connectionGroups" | Where-Object {$_.Name -eq "ROOT"}) -eq $null) {
+        Write-Warning "No root level group detected. Let's fix that, shall we?"
+        $rootLevel = @()
+        $rootLevel += [pscustomobject] @{
+            name = "ROOT"
+            id = ([guid]::NewGuid()).ToString()
+        }
+        $UserSettings | Add-Member -Name 'datasource.connectionGroups' -MemberType NoteProperty -Value $rootLevel | Out-Null
+    }
+
     ForEach ($sg in $ServerGroups) {
         $ParentID = $RootConnectionGroup.id
         $ExistingParent = $UserSettings."datasource.connectionGroups" | Where-Object {$_.Name -eq $sg.parent.displayname}
         if ($ExistingParent -ne $null) { 
             $ParentID = $ExistingParent.id 
         }
-        $ConnectionGroup = [PSCustomObject] @{
-            name = $sg.DisplayName
-            id = ([guid]::NewGuid()).ToString()
-            parentId = $ParentID
-            color = "#ededed"
-            description = "Imported from SSMS"
+        $ExistingGroup = $UserSettings."datasource.connectionGroups" | Where-Object {$_.Name -eq $sg.DisplayName}
+        if ($ExistingGroup -eq $null) {
+            Write-Verbose "Adding group to $parentID..."
+            $ConnectionGroup = [PSCustomObject] @{
+                name = $sg.DisplayName
+                id = ([guid]::NewGuid()).ToString()
+                parentId = $ParentID
+                color = "#515151"
+                description = "Imported from SSMS"
+            }
+            $UserSettings."datasource.connectionGroups" += $ConnectionGroup
+        } else {
+            $GroupName = $sg.DisplayName
+            Write-Verbose "Ignoring group $GroupName because it already exists"
         }
-        $UserSettings."datasource.connectionGroups" += $ConnectionGroup
     }
 
     Write-Verbose "Getting servers..."    
+    if ($UserSettings."datasource.connections" -eq $null) {
+        Write-Warning "No connections defined in settings file. Let's fix that, shall we?"
+        $UserSettings | Add-Member -Name 'datasource.connections' -MemberType NoteProperty -Value @() | Out-Null
+    }    
     ForEach ($s in $Servers) {
-        $ParentID = $UserSettings."datasource.connectionGroups" | Where-Object {$_.Name -eq $s.parent.displayname}        
-        $Connection = [PSCustomObject] @{
-            options = [PSCustomObject] @{
-                server=$s.ServerName
-                database="master"
-                authenticationType="Integrated"
-                user=""
-                password=""
-                applicationName="sqlops"
-                databaseDisplayName="master"
+        $ParentID = $UserSettings."datasource.connectionGroups" | Where-Object {$_.Name -eq $s.parent.displayname}
+        if (($UserSettings."datasource.connections" | Where-Object {$_.options.server -eq $s.ServerName -and $_.groupID -eq $ParentID.id}) -eq $null) {
+            $dbUser = "";
+            $dbPassword = "";
+            $AuthenticationType = "Integrated"
+            if ($s.authenticationType -eq 1)    
+            {
+                $ConnectionString = $s.ConnectionString
+                $dbUser = $ConnectionString.replace(" ","").split(";")[1].split("=")[1]
+                $dbPassword = $ConnectionString.replace(" ","").split(";")[2].split("=")[1]
+                $AuthenticationType = "SqlLogin"
             }
-            groupId = $ParentID.id
-            providerName = "MSSQL"
-            savePassword = $true
-            id = ([guid]::NewGuid()).ToString()
+            $Connection = [PSCustomObject] @{
+                options = [PSCustomObject] @{
+                    server=$s.ServerName
+                    database="master"
+                    authenticationType=$AuthenticationType
+                    user=$dbUser
+                    password=$dbPassword
+                    applicationName="sqlops"
+                    databaseDisplayName="master"
+                }
+                groupId = $ParentID.id
+                providerName = "MSSQL"
+                savePassword = $true
+                id = ([guid]::NewGuid()).ToString()
+            }
+            $UserSettings."datasource.connections" += $Connection
+        } else {
+            $ServerName = $s.ServerName
+            $GroupName = ($UserSettings."datasource.connectionGroups" | Where-Object {$_.Name -eq $s.parent.displayname}).Name
+            Write-Verbose "Already a connection to $ServerName in $GroupName, skipping..."
         }
-        $UserSettings."datasource.connections" += $Connection
     }
 }
 
 end {
-    if ($SaveTo -eq $null) {
+    if (!$SaveTo) {
         $UserSettings | ConvertTo-Json -Depth 99 | Out-File -FilePath $PathToSettingsFile -Encoding "UTF8"
     } else {
         $UserSettings | ConvertTo-Json -Depth 99 | Out-File -FilePath $SaveTo -Encoding "UTF8"
