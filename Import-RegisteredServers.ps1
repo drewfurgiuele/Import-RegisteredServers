@@ -39,6 +39,7 @@ process {
         $UserSettings | Add-Member -Name 'datasource.connectionGroups' -MemberType NoteProperty -Value $rootLevel | Out-Null
     }
 
+    $RootConnectionGroup = $UserSettings."datasource.connectionGroups" | Where-Object {$_.Name -eq "ROOT"}
     ForEach ($sg in $ServerGroups) {
         $ParentID = $RootConnectionGroup.id
         $ExistingParent = $UserSettings."datasource.connectionGroups" | Where-Object {$_.Name -eq $sg.parent.displayname}
