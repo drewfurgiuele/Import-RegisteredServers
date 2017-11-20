@@ -2,9 +2,11 @@
 
 Did you want to copy all your currently registered servers in SQL Server Management Studio over to SQL Operations Studio? Me too. This function will do just that.
 
+If you want to read more about how the script was constructed or to see a demo, visit: http://www.port1433.com
+
 ## Requirements
 
-Make sure you have the SQL Server PowerShell Module loaded. You can get it here: https://www.powershellgallery.com/packages/SqlServer/
+Make sure you have the SQL Server PowerShell Module loaded. You can get it here: https://www.powershellgallery.com/packages/SqlServer/s
 
 ## Important Notes:
 
