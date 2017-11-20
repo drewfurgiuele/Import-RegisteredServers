@@ -6,7 +6,7 @@ If you want to read more about how the script was constructed or to see a demo, 
 
 ## Requirements
 
-Make sure you have the SQL Server PowerShell Module loaded. You can get it here: https://www.powershellgallery.com/packages/SqlServer/s
+Make sure you have the SQL Server PowerShell Module loaded. You can get it here: https://www.powershellgallery.com/packages/SqlServer/
 
 ## Important Notes:
 
