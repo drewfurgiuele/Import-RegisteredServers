@@ -22,6 +22,7 @@ begin {
 }
 
 process {
+    Import-Module SqlServer -DisableNameChecking
     $RegisteredServers = Get-ChildItem SQLSERVER:\SQLRegistration -Recurse | Where-Object {$_.ServerType -eq "DatabaseEngine"}
     $RegisteredServers.Refresh()
     $ServerGroups = $RegisteredServers | Where-Object {$_.ServerName -eq $null}
@@ -70,6 +71,8 @@ process {
     }    
     ForEach ($s in $Servers) {
         $ParentID = $UserSettings."datasource.connectionGroups" | Where-Object {$_.Name -eq $s.parent.displayname}
+        Write-Output $s.name
+        
         if (($UserSettings."datasource.connections" | Where-Object {$_.options.server -eq $s.ServerName -and $_.groupID -eq $ParentID.id}) -eq $null) {
             $dbUser = "";
             $dbPassword = "";
@@ -83,6 +86,7 @@ process {
             }
             $Connection = [PSCustomObject] @{
                 options = [PSCustomObject] @{
+                    connectionName=$s.name
                     server=$s.ServerName
                     database="master"
                     authenticationType=$AuthenticationType
