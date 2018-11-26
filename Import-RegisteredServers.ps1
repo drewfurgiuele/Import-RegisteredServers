@@ -70,9 +70,7 @@ process {
         $UserSettings | Add-Member -Name 'datasource.connections' -MemberType NoteProperty -Value @() | Out-Null
     }    
     ForEach ($s in $Servers) {
-        $ParentID = $UserSettings."datasource.connectionGroups" | Where-Object {$_.Name -eq $s.parent.displayname}
-        Write-Output $s.name
-        
+        $ParentID = $UserSettings."datasource.connectionGroups" | Where-Object {$_.Name -eq $s.parent.displayname}        
         if (($UserSettings."datasource.connections" | Where-Object {$_.options.server -eq $s.ServerName -and $_.groupID -eq $ParentID.id}) -eq $null) {
             $dbUser = "";
             $dbPassword = "";
