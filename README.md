@@ -1,6 +1,6 @@
 # Import-RegisteredServers
 
-Did you want to copy all your currently registered servers in SQL Server Management Studio over to SQL Operations Studio? Me too. This function will do just that.
+Did you want to copy all your currently registered servers in SQL Server Management Studio over to Azure Data Studio? Me too. This function will do just that.
 
 If you want to read more about how the script was constructed or to see a demo, visit: http://www.port1433.com
 
@@ -11,7 +11,7 @@ Make sure you have the SQL Server PowerShell Module loaded. You can get it here:
 ## Important Notes:
 
 1. It’s mentioned above, but bears repeating: this requires the SQL Server PowerShell module. Go download it already!
-2. If you run the script and you see servers show up in your settings, but not in SQL Ops Studio, try restarting the application. It can be a little finicky about that.
+2. If you run the script and you see servers show up in your settings, but not in Azure Data Studio, try restarting the application. It can be a little finicky about that.
 3. The function can take two optional parameters:
    1. `-PathToSettingsFile`  will allow you to specify a different user settings file. By default, the script will read your $env:AppData  variable to determine the default location, but if it can’t find it there, you can override where it looks with this parameter.
    2. `-SaveTo`  is similar, except your have your output saved somewhere else instead of overwriting your existing file

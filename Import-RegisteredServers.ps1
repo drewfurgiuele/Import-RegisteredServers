@@ -9,6 +9,7 @@ param(
 )
 
 begin {
+    #Requires -module sqlserver    
     if (!$PathToSettingsFile) {
         Write-Verbose "No path specified, defaulting to current APPDATA environment variable..."
         $PathToSettingsFile = ($env:APPDATA + "\sqlops\user\settings.json") 
