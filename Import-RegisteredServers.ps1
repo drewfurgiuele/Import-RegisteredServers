@@ -1,5 +1,9 @@
 <#
     There should be a longer help file here.
+
+    You'll need the PS SQL Server module installed:
+    
+    Install-Module -Name SqlServer -Force –AllowClobber
 #>
 
 [cmdletbinding()]
@@ -9,10 +13,18 @@ param(
 )
 
 begin {
-    #Requires -module sqlserver    
+    #Requires -module sqlserver 
+    
+    Import-Module SqlServer
+
     if (!$PathToSettingsFile) {
         Write-Verbose "No path specified, defaulting to current APPDATA environment variable..."
-        $PathToSettingsFile = ($env:APPDATA + "\sqlops\user\settings.json") 
+        if([System.IO.File]::Exists($env:APPDATA + "\azuredatastudio\user\settings.json")){
+            $PathToSettingsFile = ($env:APPDATA + "\azuredatastudio\user\settings.json") 
+        }
+        else{
+            $PathToSettingsFile = ($env:APPDATA + "\sqlops\user\settings.json")
+        }
         Write-Verbose "Backing up existing settings file..."
         Copy-Item -Path $PathToSettingsFile -Destination ($PathToSettingsFile + ".old")
         Write-Verbose "Path to settings = $PathToSettingsFile"
